@@ -1,0 +1,33 @@
+# EEG SSL config — BIG two-view VICReg baseline on TUSZ (~10-15 min, 1 GPU).
+# Same recipe as fast_tusz.yaml but scaled: bigger encoder/projector, batch 512,
+# more EDF workers, and ~25x more windows/epoch over 40 epochs -> a real encoder
+# we can probe. Still VICReg two-view, NOT the energy detector yet.
+meta:
+  seed: 0
+  ckpt_dir: /lustre/work/vivatech-dreamingmachines/lguerin/checkpoints/eeg/big_tusz
+data:
+  data_root: /lustre/work/pdl17890/udl806719/datasets/Neuro/TUSZ_PREPROCESSED/edf
+  split: train
+  n_channels: 19
+  sfreq: 200
+  window_sec: 10.0
+  epoch_size: 50000         # ~25x the smoke test
+  batch_size: 512
+  num_workers: 24           # push EDF throughput (job runs with --cpus-per-task=32)
+  aug_noise_std: 0.1
+  aug_scale_jitter: 0.2
+  aug_chan_drop_p: 0.2
+  aug_time_mask_frac: 0.2
+model:
+  in_channels: 19
+  out_dim: 512
+  hidden: 96
+  depth: 5
+  projector: 512-2048-2048
+  regularizer: vicreg
+  std_coeff: 1.0
+  cov_coeff: 1.0
+optim:
+  epochs: 40
+  lr: 0.001
+  weight_decay: 1.0e-6

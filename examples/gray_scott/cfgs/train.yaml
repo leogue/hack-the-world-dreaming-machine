@@ -1,0 +1,33 @@
+# Gray-Scott temporal-JEPA pretraining config — 2D physical video [2,T,128,128].
+meta:
+  seed: 0
+  ckpt_dir: UPDATEME/checkpoints/gray_scott/dev
+data:
+  data_root: /lustre/work/pdl17890/udl806719/datasets/the_well/gray_scott_reaction_diffusion
+  split: train
+  channels: 2
+  img_size: 128
+  n_frames: 10          # frames per clip
+  time_stride: 4        # Gray-Scott evolves slowly -> space frames out
+  epoch_size: 8000
+  batch_size: 8
+  num_workers: 8
+model:
+  dobs: 2               # two chemical fields A, B (encoder in_d)
+  henc: 32              # encoder hidden width
+  dstc: 16              # latent dim D (encoder out_d)
+  hpre: 32              # predictor (ResUNet) hidden width
+  steps: 4              # JEPA prediction steps (context_length=2)
+  # TODO: add any extra hyperparameters your encoder / JEPA assembly need
+  #       (e.g. ema decay, projector spec, predictor variant)
+loss:
+  std_coeff: 10.0       # VCLoss variance term (anti-collapse)
+  cov_coeff: 100.0      # VCLoss covariance term
+optim:
+  epochs: 20
+  lr: 1.0e-3
+training:
+  use_amp: true
+  dtype: bfloat16
+logging:
+  log_every: 50

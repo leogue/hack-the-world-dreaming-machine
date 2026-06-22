@@ -1,0 +1,6 @@
+# EEG downstream eval config (patient-disjoint abnormality probe).
+# The split is the golden rule: fit on `train` patients, score on `eval` patients
+# (no subject overlap). The eval number is the one that answers transferability.
+n_windows: 16            # evenly-spaced windows mean-pooled per recording
+# TUEV idea (TODO, optional): swap to the harder 6-class event variant — the
+# probe becomes a multi-class, second-level classifier (see README extension).

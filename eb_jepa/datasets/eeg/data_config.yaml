@@ -1,0 +1,14 @@
+# EEG dataset defaults (TUH abnormality corpus, TUAB_PREPROCESSED).
+data_root: /lustre/work/pdl17890/udl806719/datasets/Neuro/TUAB-TUEV/TUAB_PREPROCESSED
+n_channels: 19          # standard 10-20 montage (fixed order)
+sfreq: 200              # Hz
+window_sec: 10.0        # seconds per window  -> T = 2000 samples
+epoch_size: 20000       # random windows per epoch (ssl mode)
+n_windows: 16           # evenly-spaced windows per recording (probe mode)
+batch_size: 128
+num_workers: 8
+# SSL augmentation strengths (per view, in z-scored units)
+aug_noise_std: 0.1
+aug_scale_jitter: 0.2
+aug_chan_drop_p: 0.2
+aug_time_mask_frac: 0.2

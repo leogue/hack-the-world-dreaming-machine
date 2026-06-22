@@ -1,0 +1,5 @@
+# LTSF downstream forecasting eval config.
+pred_len: 96             # horizon H; sweep {96, 192, 336, 720} for the full table
+# Baselines to compare against (TODO in eval.py): a RANDOM-encoder floor, a
+# supervised end-to-end encoder+head (= direct forecasting), and the strong
+# DLinear/NLinear linear map L->H on the raw input — the bar worth clearing.

@@ -1,0 +1,29 @@
+# Audio SSL pretraining config — Speech Commands v2 (35-keyword spotting).
+# Same config for both representations; only `data.mode` (raw|mel) changes the encoder.
+meta:
+  seed: 0
+  ckpt_dir: UPDATEME/checkpoints/audio/dev
+data:
+  data_root: /lustre/work/pdl17890/udl806719/datasets/speech_commands_v2
+  mode: raw              # raw ([1,16000]) | mel ([1,n_mels,T])  (override: data.mode=mel)
+  n_views: 2             # 2 -> two-view VICReg; 1 -> single view (predictive)
+  n_classes: 35
+  sample_rate: 16000
+  n_mels: 64
+  n_fft: 400
+  hop: 160
+  specaug: true
+  shift_frac: 0.1
+  gain_db: 6.0
+  noise_snr_db: [5.0, 30.0]
+  batch_size: 128
+  num_workers: 8
+model:
+  mode: raw             # must match data.mode (selects raw-CNN vs mel-CNN)
+  out_dim: 512          # latent dim D
+  # TODO: add the hyperparameters your encoder / objective need
+  #       (depth, n_frames, predictor type, ema, proj_spec, std_coeff, cov_coeff, ...)
+optim:
+  epochs: 30
+  lr: 1.0e-3
+  weight_decay: 1.0e-6

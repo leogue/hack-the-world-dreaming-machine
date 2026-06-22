@@ -1,0 +1,4 @@
+# FinTime downstream eval config.
+target: direction        # direction (2-cls up/down) | return (regression)
+# Temporal-OOD idea (TODO, optional): train the probe on an early period and test
+# on a later one to stress transfer across market regimes (e.g. 2010-2018 -> 2021-2025).

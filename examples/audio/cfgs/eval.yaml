@@ -1,0 +1,9 @@
+# Audio downstream eval config.
+# The eval reads the dataset config from the checkpoint; this file documents the
+# protocol. Metric = 35-way linear-probe accuracy on the OFFICIAL test split
+# (chance = 100/35 = 2.86 %).
+#
+# Comparison idea (TODO, in eval.py:probe): report the frozen SSL probe accuracy
+# against (a) a random untrained encoder floor and (b) a supervised end-to-end
+# baseline, to show the SSL features are actually transferable.
+n_classes: 35

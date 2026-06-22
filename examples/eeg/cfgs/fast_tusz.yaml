@@ -1,0 +1,34 @@
+# EEG SSL smoke-test config — two-view VICReg on TUSZ (quick baseline).
+# Goal of this run: confirm the pipeline runs end-to-end, measure EDF throughput
+# and time/epoch, and watch the anti-collapse (var) term. NOT the energy detector
+# yet — that is the next iteration (predictive JEPA + per-window energy readout).
+meta:
+  seed: 0
+  ckpt_dir: /lustre/work/vivatech-dreamingmachines/lguerin/checkpoints/eeg/fast_tusz
+data:
+  # TUSZ (seizure corpus) — ssl mode ignores labels, just reads random windows.
+  data_root: /lustre/work/pdl17890/udl806719/datasets/Neuro/TUSZ_PREPROCESSED/edf
+  split: train
+  n_channels: 19
+  sfreq: 200
+  window_sec: 10.0
+  epoch_size: 2000          # ~10% of the default 20000 random windows/epoch (quick)
+  batch_size: 256
+  num_workers: 12           # EDF reads are IO-bound -> many workers
+  aug_noise_std: 0.1
+  aug_scale_jitter: 0.2
+  aug_chan_drop_p: 0.2
+  aug_time_mask_frac: 0.2
+model:
+  in_channels: 19
+  out_dim: 256
+  hidden: 64
+  depth: 4
+  projector: 256-1024-1024
+  regularizer: vicreg       # vicreg | sigreg (H3); set std_coeff=0 to force collapse (H2)
+  std_coeff: 1.0
+  cov_coeff: 1.0
+optim:
+  epochs: 5
+  lr: 0.001
+  weight_decay: 1.0e-6

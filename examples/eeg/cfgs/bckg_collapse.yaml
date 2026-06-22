@@ -1,0 +1,33 @@
+# H2 — collapse ablation: same as bckg_vicreg but std_coeff=0 (no variance term).
+# Expectation: the encoder collapses -> probe AUROC drops toward chance
+# ("a collapsed model is a blind detector").
+meta:
+  seed: 0
+  ckpt_dir: /lustre/work/vivatech-dreamingmachines/lguerin/checkpoints/eeg/bckg_collapse
+data:
+  data_root: /lustre/work/pdl17890/udl806719/datasets/Neuro/TUSZ_PREPROCESSED/edf
+  split: train
+  bckg_only: true
+  n_channels: 19
+  sfreq: 200
+  window_sec: 10.0
+  epoch_size: 20000
+  batch_size: 256
+  num_workers: 16
+  aug_noise_std: 0.1
+  aug_scale_jitter: 0.2
+  aug_chan_drop_p: 0.2
+  aug_time_mask_frac: 0.2
+model:
+  in_channels: 19
+  out_dim: 256
+  hidden: 64
+  depth: 5
+  projector: 256-2048-2048
+  regularizer: vicreg
+  std_coeff: 0.0           # <-- collapse: no anti-collapse variance term (H2)
+  cov_coeff: 1.0
+optim:
+  epochs: 20
+  lr: 0.001
+  weight_decay: 1.0e-6

@@ -1,0 +1,30 @@
+# EEG predictive (energy) JEPA — Étape 2, first run on TUSZ normal-only.
+# Pretrain a world model on seizure-FREE recordings; the per-frame prediction
+# energy is the zero-label anomaly score evaluated later on seizures.
+meta:
+  seed: 0
+  ckpt_dir: /lustre/work/vivatech-dreamingmachines/lguerin/checkpoints/eeg/energy_tusz
+data:
+  data_root: /lustre/work/pdl17890/udl806719/datasets/Neuro/TUSZ_PREPROCESSED/edf
+  split: train
+  n_channels: 19
+  sfreq: 200
+  frame_sec: 2.0            # 1 latent frame = 2 s
+  seq_len: 16              # 16 frames = 32 s context (15 prediction steps)
+  epoch_size: 6000
+  batch_size: 128
+  num_workers: 16
+  bckg_only: true          # pretrain on seizure-free recordings only (normal dynamics)
+model:
+  in_channels: 19
+  out_dim: 256
+  hidden: 64
+  depth: 5
+  action_dim: 1            # dummy zero action -> autonomous dynamics
+  rnn_layers: 1
+  std_coeff: 1.0           # anti-collapse (VCLoss); set 0 for the H2 collapse ablation
+  cov_coeff: 1.0
+optim:
+  epochs: 15
+  lr: 0.001
+  weight_decay: 1.0e-6

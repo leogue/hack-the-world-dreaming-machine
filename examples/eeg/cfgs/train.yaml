@@ -1,0 +1,27 @@
+# EEG SSL pretraining config (two-view VICReg on TUAB_PREPROCESSED).
+meta:
+  seed: 0
+  ckpt_dir: UPDATEME/checkpoints/eeg/dev
+data:
+  data_root: /lustre/work/pdl17890/udl806719/datasets/Neuro/TUAB-TUEV/TUAB_PREPROCESSED
+  split: train
+  n_channels: 19
+  sfreq: 200
+  window_sec: 10.0
+  epoch_size: 20000        # random windows per epoch
+  batch_size: 128
+  num_workers: 8
+  aug_noise_std: 0.1
+  aug_scale_jitter: 0.2
+  aug_chan_drop_p: 0.2
+  aug_time_mask_frac: 0.2
+model:
+  in_channels: 19
+  out_dim: 256          # latent dim D (encoder output)
+  # TODO: add the hyperparameters your encoder / objective need
+  #       (hidden, depth, projector spec e.g. 256-1024-1024,
+  #        std_coeff, cov_coeff; or n_frames, predictor type, ema for JEPA)
+optim:
+  epochs: 20
+  lr: 0.001
+  weight_decay: 1.0e-6

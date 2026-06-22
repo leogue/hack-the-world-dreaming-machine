@@ -1,0 +1,21 @@
+# LTSF SSL pretraining config (predictive-JEPA on ETTh1 input windows).
+meta:
+  seed: 0
+  ckpt_dir: UPDATEME/checkpoints/ltsf/dev
+data:
+  csv: /lustre/work/pdl17890/udl806719/datasets/LTSF/ETT-small/ETTh1.csv
+  name: ETTh1
+  in_channels: 7
+  seq_len: 336          # input window length L
+  pred_len: 96          # placeholder (SSL ignores it; the probe sweeps horizons)
+  batch_size: 64
+  num_workers: 8
+model:
+  in_channels: 7
+  out_dim: 256          # latent dim D
+  # TODO: add the hyperparameters your encoder / objective need
+  #       (hidden, depth, n_frames, n_context, predictor action_dim, ema, std_coeff, cov_coeff, ...)
+optim:
+  epochs: 50
+  lr: 0.001
+  weight_decay: 1.0e-6

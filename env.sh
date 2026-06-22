@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# Source this file to set up the EB-JEPA environment variables.
+# Usage: source env.sh
+# In SLURM scripts: source "$(dirname "$0")/../env.sh"  (adjust path as needed)
+
+# --- Team / group detection (generic — no hardcoded team name) ----------------------
+# Each team has an allocation named "vivatech-<team>": it is your Unix group, your work
+# folder (/lustre/work/vivatech-<team>/$USER), AND your SLURM account. Your team is simply
+# the "vivatech-*" group you belong to, so we read it straight from your group membership —
+# no directory scan, no hardcoded team. Everything else (work dir, account) derives from it.
+# Override by exporting EBJEPA_TEAM (and/or EBJEPA_WORK) before sourcing.
+if [ -z "${EBJEPA_TEAM:-}" ]; then
+    for _eb_g in $(id -Gn 2>/dev/null); do
+        case "$_eb_g" in vivatech-*) EBJEPA_TEAM="$_eb_g"; break;; esac
+    done
+    unset _eb_g
+fi
+export EBJEPA_TEAM="${EBJEPA_TEAM:-}"
+if [ -z "$EBJEPA_TEAM" ] && [ -z "${EBJEPA_WORK:-}" ]; then
+    echo "env.sh: WARNING — no 'vivatech-*' team group found for '$USER'; set EBJEPA_TEAM or EBJEPA_WORK." >&2
+fi
+
+# Your personal work directory. WORK IS NOT YOUR HOME: clone the repo and run everything
+# from /lustre/work (the home quota blocks git/venvs). Derives from the detected team.
+WORK="${EBJEPA_WORK:-/lustre/work/$EBJEPA_TEAM/$USER}"
+export EBJEPA_WORK="$WORK"                  # exported so python (launch_sbatch) sees it
+ARCH=$(uname -m)                           # x86_64 on login node, aarch64 on compute nodes
+export EBJEPA_COMPUTE_ARCH=${EBJEPA_COMPUTE_ARCH:-aarch64}  # target arch for SLURM jobs
+
+# Repo root (this file lives at the repo root) — SLURM scripts read $EBJEPA_REPO.
+export EBJEPA_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Cluster utility scripts
+export PATH="$EBJEPA_REPO/cluster:$PATH"
+
+# uv binary (arch-specific, avoids Exec format error across node types)
+export UV_INSTALL_DIR=$WORK/uv_bin/$ARCH
+export PATH="$UV_INSTALL_DIR:$HOME/.local/bin:$PATH"
+
+# uv cache and venv (arch-specific so x86_64 and aarch64 don't collide)
+export UV_CACHE_DIR=$WORK/uv_cache/$ARCH
+export UV_PROJECT_ENVIRONMENT=$WORK/venvs/eb_jepa_$ARCH
+# uv-managed CPython must also live on /work. Otherwise uv installs it under
+# ~/.local/share/uv/python, which overflows the small /lustre/home quota and makes the
+# aarch64 venv-sync job die with "Disk quota exceeded" during CPython extraction.
+export UV_PYTHON_INSTALL_DIR=$WORK/uv_python/$ARCH
+
+# Keep ALL caches on /work — the /lustre/home quota is small and fills up fast
+# (model/dataset downloads, torch.compile kernels, pip wheels, matplotlib, ...).
+export XDG_CACHE_HOME=$WORK/.cache              # catch-all (pip, matplotlib, fontconfig, ...)
+export HF_HOME=$WORK/.cache/huggingface         # HuggingFace hub + datasets + transformers
+export TORCH_HOME=$WORK/.cache/torch            # torch hub weights
+export TRITON_CACHE_DIR=$WORK/.cache/triton     # torch.compile / triton kernels
+export PIP_CACHE_DIR=$WORK/.cache/pip
+export WANDB_DIR=$WORK/wandb                     # W&B run files + cache
+export WANDB_CACHE_DIR=$WORK/.cache/wandb
+
+# EB-JEPA paths
+export EBJEPA_CKPTS=${EBJEPA_CKPTS:-$WORK/checkpoints}
+# Dataset folder. Defaults to your own $WORK/datasets; set EBJEPA_DSETS to point at
+# a shared/provided dataset folder if one is available on your cluster.
+export EBJEPA_DSETS=${EBJEPA_DSETS:-$WORK/datasets}
+
+# W&B: export WANDB_DISABLED=true before sourcing to turn off logging cluster-wide
+export WANDB_DISABLED=${WANDB_DISABLED:-false}
+
+# --- SLURM defaults for the HTW cluster (GB200 / Grace-Blackwell nodes) --------------
+# These feed examples/launch_sbatch.py. Override any of them by exporting the same var
+# before sourcing this file (so the launcher stays portable to other clusters).
+export EBJEPA_SLURM_PARTITION=${EBJEPA_SLURM_PARTITION:-defq}
+export EBJEPA_SLURM_GPUS=${EBJEPA_SLURM_GPUS:-1}
+export EBJEPA_SLURM_CPUS=${EBJEPA_SLURM_CPUS:-8}
+export EBJEPA_SLURM_TIME_MIN=${EBJEPA_SLURM_TIME_MIN:-120}
+# SLURM reservation for the Vivatech event. Override (or set empty) to disable.
+export EBJEPA_SLURM_RESERVATION=${EBJEPA_SLURM_RESERVATION:-Vivatech}
+# Memory request. EMPTY by default: the HTW DALIA scheduler FORBIDS --mem/--mem-per-gpu
+# (it rejects the job) and allocates memory proportional to the requested cores. Only set
+# this (e.g. 220G) on a different cluster that requires an explicit per-GPU memory request.
+export EBJEPA_SLURM_MEM=${EBJEPA_SLURM_MEM:-}
+
+# Per-user SLURM account & QOS.
+# Resolution order: value already in the environment  >  the persisted per-user file
+# (written once by setup.sh)  >  SLURM auto-detection via sacctmgr. If nothing is found
+# they stay empty, and launch_sbatch simply omits --account/--qos (SLURM then uses your
+# own defaults). This keeps shells non-interactive; the prompt only happens in setup.sh.
+EBJEPA_SLURM_USER_ENV=${EBJEPA_SLURM_USER_ENV:-$WORK/.eb_jepa_slurm.env}
+[ -f "$EBJEPA_SLURM_USER_ENV" ] && source "$EBJEPA_SLURM_USER_ENV"
+
+if [ -z "${EBJEPA_SLURM_CONFIGURED:-}" ]; then
+    if [ -z "${EBJEPA_SLURM_ACCOUNT:-}" ] && command -v sacctmgr >/dev/null 2>&1; then
+        _eb_acct=$(sacctmgr -nP show user "$USER" format=DefaultAccount 2>/dev/null | grep -v '^$' | head -1)
+        [ -z "$_eb_acct" ] && _eb_acct=$(sacctmgr -nP show assoc user="$USER" format=Account 2>/dev/null | grep -v '^$' | head -1)
+        [ -n "$_eb_acct" ] && export EBJEPA_SLURM_ACCOUNT="$_eb_acct"
+    fi
+    if [ -z "${EBJEPA_SLURM_QOS:-}" ] && command -v sacctmgr >/dev/null 2>&1; then
+        _eb_qos=$(sacctmgr -nP show assoc user="$USER" format=QOS 2>/dev/null | tr ',' '\n' | grep -v '^$' | head -1)
+        [ -n "$_eb_qos" ] && export EBJEPA_SLURM_QOS="$_eb_qos"
+    fi
+fi
+# Export whatever we resolved. If sacctmgr found nothing, fall back to the team/group name
+# (== the SLURM account on this cluster); empty only if even that is unknown.
+export EBJEPA_SLURM_ACCOUNT=${EBJEPA_SLURM_ACCOUNT:-$EBJEPA_TEAM}
+export EBJEPA_SLURM_QOS=${EBJEPA_SLURM_QOS:-}

@@ -1,0 +1,4 @@
+meta: {seed: 0, ckpt_dir: /lustre/work/vivatech-dreamingmachines/lguerin/checkpoints/eeg/wb_energy, wandb: true, wandb_project: eeg-jepa, wandb_name: energy_worldmodel}
+data: {data_root: /lustre/work/pdl17890/udl806719/datasets/Neuro/TUSZ_PREPROCESSED/edf, split: train, bckg_only: true, n_channels: 19, sfreq: 200, frame_sec: 2.0, seq_len: 16, epoch_size: 6000, batch_size: 128, num_workers: 16, norm: seq}
+model: {out_dim: 256, hidden: 64, depth: 5, action_dim: 1, rnn_layers: 1, std_coeff: 1.0, cov_coeff: 1.0}
+optim: {epochs: 30, lr: 0.001, weight_decay: 1.0e-6}

@@ -1,0 +1,31 @@
+# Experiment A: energy JEPA with SEQUENCE-level normalization (amplitude survives).
+# Same as energy_tusz.yaml but norm=seq -> tests whether per-frame z-scoring was
+# what killed the energy detector (Étape 2 negative result).
+meta:
+  seed: 0
+  ckpt_dir: /lustre/work/vivatech-dreamingmachines/lguerin/checkpoints/eeg/energy_tusz_seqnorm
+data:
+  data_root: /lustre/work/pdl17890/udl806719/datasets/Neuro/TUSZ_PREPROCESSED/edf
+  split: train
+  n_channels: 19
+  sfreq: 200
+  frame_sec: 2.0
+  seq_len: 16
+  epoch_size: 6000
+  batch_size: 128
+  num_workers: 16
+  bckg_only: true
+  norm: seq                # per-channel over the whole 32s window (keeps amplitude)
+model:
+  in_channels: 19
+  out_dim: 256
+  hidden: 64
+  depth: 5
+  action_dim: 1
+  rnn_layers: 1
+  std_coeff: 1.0
+  cov_coeff: 1.0
+optim:
+  epochs: 15
+  lr: 0.001
+  weight_decay: 1.0e-6

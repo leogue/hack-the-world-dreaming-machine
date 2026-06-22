@@ -1,0 +1,20 @@
+# FinTime SSL pretraining config.
+meta:
+  seed: 0
+  ckpt_dir: UPDATEME/checkpoints/fintime/dev
+data:
+  data_root: /lustre/work/pdl17890/udl806719/datasets/Finance/fintime_prep
+  in_channels: 87
+  batch_size: 256
+  num_workers: 8
+  aug_noise_std: 0.05
+  aug_scale_jitter: 0.1
+model:
+  in_channels: 87
+  out_dim: 256          # latent dim D
+  # TODO: add the hyperparameters your encoder / objective need
+  #       (depth, n_frames, predictor type, ema, std_coeff, cov_coeff, ...)
+optim:
+  epochs: 30
+  lr: 0.001
+  weight_decay: 1.0e-6

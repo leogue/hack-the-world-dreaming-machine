@@ -1,0 +1,9 @@
+# Gray-Scott downstream eval config (field-space VRMSE rollout).
+H: 10                  # autoregressive rollout horizon (frames predicted)
+context_length: 2      # context frames fed to the predictor (StateOnlyPredictor)
+# Decoder (TODO): a frozen-JEPA latent->field decoder trained to minimise
+# MSE(decode(encode(field)), field); its reconstruction error is JEPA's
+# irreducible field-space VRMSE floor — report it alongside the rollout.
+# Optional surrogates: train FNO / U-Net iso-protocol (predict next field from the
+# previous 2 fields) to answer The Well's stability question.
+decoder_ckpt: UPDATEME/checkpoints/gray_scott/dev/decoder.pth
